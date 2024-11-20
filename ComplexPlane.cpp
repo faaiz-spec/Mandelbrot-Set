@@ -56,6 +56,7 @@ void ComplexPlane::setCenter(Vector2i mousePixel) {
 
 void ComplexPlane::setMouseLocation(Vector2i mousePixel) {
     m_mouseLocation = mapPixelToCoords(mousePixel);
+}
 
 void ComplexPlane::loadText(Text& text) {
     std::stringstream ss;
