@@ -10,53 +10,45 @@ using namespace std;
 
 int main() {
 
-    VideoMode desktopMode = VideoMode::getDesktopMode();
-    int width = desktopMode.width / 2;
-    int height = desktopMode.height / 2;
+    const int windowWidth = 800;
+    const int windowHeight = 600;
 
-    RenderWindow window(VideoMode(width, height), "Mandelbrot Set");
-    ComplexPlane complexPlane(width, height);
-    Font font;
-    Text text;
+    // Create a window
+    sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "Mandelbrot Set");
 
-    if (!font.loadFromFile("arial.ttf")) {
-        std::cerr << "Error loading font!" << std::endl;
-        return -1;
-    }
-
-    text.setFont(font);
-    text.setCharacterSize(24);
-    text.setFillColor(Color::White);
+    // Create the ComplexPlane object
+    ComplexPlane plane(windowWidth, windowHeight);
 
     while (window.isOpen()) {
-        Event event;
+        sf::Event event;
         while (window.pollEvent(event)) {
-            if (event.type == Event::Closed) {
+            if (event.type == sf::Event::Closed) {
                 window.close();
             }
-            if (event.type == Event::MouseButtonPressed) {
-                if (event.mouseButton.button == Mouse::Right) {
-                    complexPlane.zoomOut();
+            else if (event.type == sf::Event::MouseButtonPressed) {
+                if (event.mouseButton.button == sf::Mouse::Left) {
+                    // Zoom in on left-click
+                    plane.setCenter({ event.mouseButton.x, event.mouseButton.y });
+                    plane.zoomIn();
                 }
-                else if (event.mouseButton.button == Mouse::Left) {
-                    complexPlane.zoomIn();
+                else if (event.mouseButton.button == sf::Mouse::Right) {
+                    // Zoom out on right-click
+                    plane.zoomOut();
                 }
-                complexPlane.setCenter({ event.mouseButton.x, event.mouseButton.y });
             }
-            if (event.type == Event::MouseMoved) {
-                complexPlane.setMouseLocation({ event.mouseMove.x, event.mouseMove.y });
-            }
-            if (Keyboard::isKeyPressed(Keyboard::Escape)) {
-                window.close();
+            else if (event.type == sf::Event::MouseMoved) {
+                // Update mouse location
+                plane.setMouseLocation({ event.mouseMove.x, event.mouseMove.y });
             }
         }
 
-        complexPlane.updateRender();
-        complexPlane.loadText(text);
-
+        // Clear the screen
         window.clear();
-        complexPlane.draw(window, RenderStates::Default);
-        window.draw(text);
+
+        // Draw the Mandelbrot set
+        window.draw(plane);
+
+        // Display the frame
         window.display();
     }
 

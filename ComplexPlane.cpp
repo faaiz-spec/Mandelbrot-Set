@@ -6,106 +6,88 @@
 using namespace sf;
 using namespace std;
 
-ComplexPlane::ComplexPlane(int pixelWidth, int pixelHeight) {
-    m_pixelSize = { pixelWidth, pixelHeight };
-    m_aspectRatio = static_cast<float>(pixelHeight) / pixelWidth;
-    m_planeCenter = { 0, 0 };
-    m_planeSize = { BASE_WIDTH, BASE_HEIGHT * m_aspectRatio };
-    m_zoomCount = 0;
-    m_state = State::CALCULATING;
-    m_vArray.setPrimitiveType(sf::Points);
-    m_vArray.resize(pixelWidth * pixelHeight);
+ComplexPlane::ComplexPlane(int pixelWidth, int pixelHeight)
+    : m_vArray(sf::Points, pixelWidth* pixelHeight), m_pixelSize(pixelWidth, pixelHeight),
+    m_planeCenter(-0.5f, 0.0f), m_planeSize(3.0f, 2.0f), m_zoomCount(0) {
+    m_aspectRatio = static_cast<float>(pixelWidth) / pixelHeight;
+    m_planeSize.x *= m_aspectRatio; // Maintain aspect ratio
+    updateRender();
 }
 
-void ComplexPlane::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    target.draw(m_vArray, states);
+// Convert pixel to complex coordinates
+sf::Vector2f ComplexPlane::mapPixelToCoords(sf::Vector2i mousePixel) const {
+    float real = m_planeCenter.x + (mousePixel.x - m_pixelSize.x / 2.0f) * (m_planeSize.x / m_pixelSize.x);
+    float imag = m_planeCenter.y + (mousePixel.y - m_pixelSize.y / 2.0f) * (m_planeSize.y / m_pixelSize.y);
+    return sf::Vector2f(real, imag);
 }
 
-void ComplexPlane::updateRender() {
-    if (m_state == State::CALCULATING) {
-        std::vector<std::thread> threads;
-        for (int j = 0; j < m_pixelSize.x; j++) {
-            threads.emplace_back([this, j]() {
-                for (int i = 0; i < m_pixelSize.y; i++) {
-                    m_vArray[j + i * m_pixelSize.x].position = { static_cast<float>(j), static_cast<float>(i) };
-                    sf::Vector2f coord = mapPixelToCoords({ j, i });
-                    size_t iterations = countIterations(coord);
-                    sf::Uint8 r, g, b;
-                    iterationsToRGB(iterations, r, g, b);
-                    m_vArray[j + i * m_pixelSize.x].color = { r, g, b };
-                }
-                });
-        }
-        for (auto& thread : threads) {
-            thread.join();
-        }
-        m_state = State::DISPLAYING;
+// Count Mandelbrot iterations
+int ComplexPlane::countIterations(sf::Vector2f coord) const {
+    const int maxIterations = 1000;
+    float x = 0, y = 0;
+    int iteration = 0;
+
+    while (x * x + y * y < 4 && iteration < maxIterations) {
+        float xTemp = x * x - y * y + coord.x;
+        y = 2 * x * y + coord.y;
+        x = xTemp;
+        iteration++;
+    }
+    return iteration;
+}
+
+// Map iterations to RGB color
+void ComplexPlane::iterationsToRGB(size_t count, sf::Uint8& r, sf::Uint8& g, sf::Uint8& b) const {
+    if (count == 1000) {
+        r = g = b = 0; // Black for points inside the set
+    }
+    else {
+        r = count % 256;
+        g = (count / 3) % 256;
+        b = (count / 5) % 256;
     }
 }
 
+// Update vertex array with Mandelbrot values
+void ComplexPlane::updateRender() {
+    for (int y = 0; y < m_pixelSize.y; ++y) {
+        for (int x = 0; x < m_pixelSize.x; ++x) {
+            sf::Vector2f coord = mapPixelToCoords({ x, y });
+            size_t iterations = countIterations(coord);
+
+            sf::Uint8 r, g, b;
+            iterationsToRGB(iterations, r, g, b);
+
+            m_vArray[y * m_pixelSize.x + x].position = sf::Vector2f(x, y);
+            m_vArray[y * m_pixelSize.x + x].color = sf::Color(r, g, b);
+        }
+    }
+}
+
+// Zoom in
 void ComplexPlane::zoomIn() {
-    m_zoomCount++;
-    float xSize = BASE_WIDTH * pow(BASE_ZOOM, m_zoomCount);
-    float ySize = BASE_HEIGHT * m_aspectRatio * pow(BASE_ZOOM, m_zoomCount);
-    m_planeSize = { xSize, ySize };
-    m_state = State::CALCULATING;
+    m_planeSize /= 1.5f;
+    updateRender();
 }
 
+// Zoom out
 void ComplexPlane::zoomOut() {
-    m_zoomCount--;
-    float xSize = BASE_WIDTH * pow(BASE_ZOOM, m_zoomCount);
-    float ySize = BASE_HEIGHT * m_aspectRatio * pow(BASE_ZOOM, m_zoomCount);
-    m_planeSize = { xSize, ySize };
-    m_state = State::CALCULATING;
+    m_planeSize *= 1.5f;
+    updateRender();
 }
 
+// Set new center based on mouse click
 void ComplexPlane::setCenter(sf::Vector2i mousePixel) {
     m_planeCenter = mapPixelToCoords(mousePixel);
-    m_state = State::CALCULATING;
+    updateRender();
 }
 
+// Update mouse location
 void ComplexPlane::setMouseLocation(sf::Vector2i mousePixel) {
     m_mouseLocation = mapPixelToCoords(mousePixel);
 }
 
-void ComplexPlane::loadText(sf::Text& text) {
-    text.setString("This is my text!");
-    sf::Font font;
-    if (!font.loadFromFile("path/to/font.ttf")) {
-        // Handle error
-    }
-    text.setFont(font);
-    text.setCharacterSize(24);
-    text.setFillColor(sf::Color::White);
-    text.setPosition(sf::Vector2f(100, 100));
-}
-
-int ComplexPlane::countIterations(sf::Vector2f coord) {
-    std::complex<float> z(0, 0);
-    std::complex<float> c(coord.x, coord.y);
-    int iterations = 0;
-
-    while (std::abs(z) <= 2.0 && iterations < MAX_ITER) {
-        z = z * z + c;
-        iterations++;
-    }
-    return iterations;
-}
-
-void ComplexPlane::iterationsToRGB(size_t count, sf::Uint8& r, sf::Uint8& g, sf::Uint8& b) {
-    if (count == MAX_ITER) {
-        r = g = b = 0; // Black for points in the set
-    }
-    else {
-        float t = static_cast<float>(count) / MAX_ITER;
-        r = static_cast<sf::Uint8>(9 * (1 - t) * t * t * t * 255);
-        g = static_cast<sf::Uint8>(15 * (1 - t) * (1 - t) * t * t * 255);
-        b = static_cast<sf::Uint8>(8.5 * (1 - t) * (1 - t) * (1 - t) * t * 255);
-    }
-}
-
-sf::Vector2f ComplexPlane::mapPixelToCoords(sf::Vector2i mousePixel) {
-    float x = ((static_cast<float>(mousePixel.x) / m_pixelSize.x) * m_planeSize.x) + (m_planeCenter.x - m_planeSize.x / 2.0f);
-    float y = ((static_cast<float>(mousePixel.y) / m_pixelSize.y) * m_planeSize.y) + (m_planeCenter.y - m_planeSize.y / 2.0f);
-    return { x, y };
+// Draw the plane
+void ComplexPlane::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    target.draw(m_vArray, states);
 }
