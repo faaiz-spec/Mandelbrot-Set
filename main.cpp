@@ -1,9 +1,9 @@
 #include "ComplexPlane.h"
 #include <iostream>
 #include <complex>
-#include <thread>
 #include <SFML/Graphics.hpp>
 #include <sstream>
+#include <thread>
 
 using namespace sf;
 using namespace std;
@@ -14,14 +14,16 @@ int main() {
     int width = desktopMode.width / 2;
     int height = desktopMode.height / 2;
 
-    RenderWindow window(VideoMode(width, height), "Complex Plane");
+    RenderWindow window(VideoMode(width, height), "Mandelbrot Set");
     ComplexPlane complexPlane(width, height);
     Font font;
     Text text;
 
-    if (!font.loadFromFile("path/to/font.ttf")) {
-        return -1; // Handle error
+    if (!font.loadFromFile("arial.ttf")) {
+        std::cerr << "Error loading font!" << std::endl;
+        return -1;
     }
+
     text.setFont(font);
     text.setCharacterSize(24);
     text.setFillColor(Color::White);
