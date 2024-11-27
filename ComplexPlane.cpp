@@ -28,15 +28,15 @@ sf::Vector2f ComplexPlane::mapPixelToCoords(sf::Vector2i mousePixel) const
 // Count Mandelbrot iterations
 int ComplexPlane::countIterations(sf::Vector2f coord) const 
 {
-    float re, im, reTemp;
+    float x, y, reTemp;
     int iterations;
-    re = 0; im = 0;
+    x = 0; y = 0;
     iterations = 0;
 
-    while (re * re + im * im < 4 && iterations < MAX_ITER) {
-        reTemp = re * re - im * im + coord.x;
-        im = 2 * re * im + coord.y;
-        re = reTemp;
+    while (x * x + y * y < 4 && iterations < MAX_ITER) {
+        reTemp = x * x - y * y + coord.x;
+        y = 2 * x * y + coord.y;
+        x = reTemp;
         iterations++;
     }
     return iterations;

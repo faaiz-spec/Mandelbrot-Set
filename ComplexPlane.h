@@ -6,6 +6,7 @@
 #include <sstream>
 #include <thread>
 #include <vector>
+#include <cmath>
 
 const unsigned int MAX_ITER = 64;
 const float BASE_WIDTH = 4.0;
@@ -22,7 +23,7 @@ class ComplexPlane : public sf::Drawable
 {
 public:
 	ComplexPlane(int pixelWidth, int pixelHeight);
-	void draw(sf::RenderTarget& target, sf::RenderStates States) const; // draw should actually be public, but i dont think theres much difference
+	void draw(sf::RenderTarget& target, sf::RenderStates States) const;
 	void zoomIn();
 	void zoomOut();
 	void setCenter(sf::Vector2i mousePixel);
