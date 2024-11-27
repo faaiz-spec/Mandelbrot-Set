@@ -1,9 +1,6 @@
 #include "ComplexPlane.h"
-#include <iostream>
-#include <complex>
 #include <SFML/Graphics.hpp>
-#include <sstream>
-#include <thread>
+#include <iostream>
 
 using namespace sf;
 using namespace std;
@@ -54,6 +51,10 @@ int main() {
 				// Update mouse location
 				plane.setMouseLocation({ event.mouseMove.x, event.mouseMove.y });
 			}
+		}
+		if (Keyboard::isKeyPressed(Keyboard::Escape))
+		{
+			window.close();
 		}
 
 		// update renderer, update text variable

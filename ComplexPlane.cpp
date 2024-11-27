@@ -1,8 +1,4 @@
 #include "ComplexPlane.h"
-#include <complex>
-#include <cmath>
-#include <thread>
-#include <iostream>
 
 using namespace sf;
 using namespace std;
@@ -109,7 +105,6 @@ void ComplexPlane::updateRender()
             threads.emplace_back(&ComplexPlane::calculateRow, this, startRow, endRow);
         }
 
-        // Join threads
         for (auto& thread : threads) {
             if (thread.joinable()) {
                 thread.join();
@@ -122,11 +117,9 @@ void ComplexPlane::updateRender()
 
 void ComplexPlane::calculateRow(int startRow, int endRow)
 {
-    //std::cout << "Thread processing rows: " << startRow << " to " << endRow << "\n";
     for (int i = startRow; i < endRow; ++i)
         for (int j = 0; j < m_pixelSize.x; ++j)
         {
-            //std::cout << i << ' ' << j << '\n';
             m_vArray[j + i * m_pixelSize.x].position = { (float)j, (float)i };
             size_t count = countIterations(mapPixelToCoords({ j,i }));
             Uint8 r, g, b;
