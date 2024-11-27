@@ -11,7 +11,6 @@ const unsigned int MAX_ITER = 64;
 const float BASE_WIDTH = 4.0;
 const float BASE_HEIGHT = 4.0;
 const float BASE_ZOOM = 0.5;
-const int THREAD_COUNT = 4;
 
 enum State
 {
@@ -33,6 +32,7 @@ public:
 
 private:
 	int countIterations(sf::Vector2f coord) const;
+	//void calculateRow(int startRow, int endRow);
 	void iterationsToRGB(size_t count, sf::Uint8& r, sf::Uint8& g, sf::Uint8& b) const;
 	sf::Vector2f mapPixelToCoords(sf::Vector2i mousePixel) const;
 

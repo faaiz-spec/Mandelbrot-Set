@@ -2,6 +2,7 @@
 #include <complex>
 #include <cmath>
 #include <thread>
+#include <iostream>
 
 using namespace sf;
 using namespace std;
@@ -92,7 +93,7 @@ void ComplexPlane::iterationsToRGB(size_t count, sf::Uint8& r, sf::Uint8& g, sf:
     }
 }
 
-// Update vertex array with Mandelbrot values
+// Update vertex array with Mandelbrot values with multithreading to speed it up
 void ComplexPlane::updateRender()
 {
     if (m_state == CALCULATING)
