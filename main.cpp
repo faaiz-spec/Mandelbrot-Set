@@ -10,47 +10,66 @@ using namespace std;
 
 int main() {
 
-    const int windowWidth = 800;
-    const int windowHeight = 600;
+	// Create a video mode object
+	int pixelWidth = VideoMode::getDesktopMode().width / 2;
+	int pixelHeight = VideoMode::getDesktopMode().height / 2;
+	VideoMode vm(pixelWidth, pixelHeight);
+	// Create and open a window for the game
+	RenderWindow window(vm, "Mandlebrot Set", Style::Default);
 
-    // Create a window
-    sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "Mandelbrot Set");
+	ComplexPlane plane(pixelWidth, pixelHeight);
 
-    // Create the ComplexPlane object
-    ComplexPlane plane(windowWidth, windowHeight);
+	Font font;
+	if (!font.loadFromFile("Mojangles.ttf"))
+	{
+		cout << "poopoo caca\n";
+		return 1;
+	}
 
-    while (window.isOpen()) {
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed) {
-                window.close();
-            }
-            else if (event.type == sf::Event::MouseButtonPressed) {
-                if (event.mouseButton.button == sf::Mouse::Left) {
-                    // Zoom in on left-click
-                    plane.setCenter({ event.mouseButton.x, event.mouseButton.y });
-                    plane.zoomIn();
-                }
-                else if (event.mouseButton.button == sf::Mouse::Right) {
-                    // Zoom out on right-click
-                    plane.zoomOut();
-                }
-            }
-            else if (event.type == sf::Event::MouseMoved) {
-                // Update mouse location
-                plane.setMouseLocation({ event.mouseMove.x, event.mouseMove.y });
-            }
-        }
+	Text text;
+	text.setFont(font);
 
-        // Clear the screen
-        window.clear();
+	while (window.isOpen())
+	{
+		sf::Event event;
+		while (window.pollEvent(event))
+		{
+			if (event.type == Event::Closed) window.close();
+			if (event.type == Event::MouseButtonPressed)
+			{
+				if (event.mouseButton.button == Mouse::Left)
+				{
+					// Zoom in on left-click
+					plane.zoomIn();
+					plane.setCenter({ event.mouseButton.x, event.mouseButton.y });
+				}
+				else if (event.mouseButton.button == Mouse::Right)
+				{
+					// Zoom out on right-click
+					plane.zoomOut();
+				}
+			}
+			else if (event.type == sf::Event::MouseMoved)
+			{
+				// Update mouse location
+				plane.setMouseLocation({ event.mouseMove.x, event.mouseMove.y });
+			}
+		}
 
-        // Draw the Mandelbrot set
-        window.draw(plane);
+		// update renderer, update text variable
+		plane.updateRender();
+		plane.updateText(text);
 
-        // Display the frame
-        window.display();
-    }
+		// Clear the screen
+		window.clear();
 
-    return 0;
+		// Draw the Mandelbrot set
+		window.draw(plane);
+		window.draw(text);
+
+		// Display the frame
+		window.display();
+	}
+
+	return 0;
 }

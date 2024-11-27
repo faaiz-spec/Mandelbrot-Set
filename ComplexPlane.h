@@ -3,35 +3,47 @@
 #define ComplexPlane_H
 
 #include <SFML/Graphics.hpp>
-using namespace sf;
-using namespace std;
+#include <sstream>
+#include <thread>
+#include <vector>
 
-class ComplexPlane : public sf::Drawable {
-private:
-    sf::VertexArray m_vArray;    // Vertex array for rendering
-    sf::RenderStates m_state;   // Render states
-    sf::Vector2f m_mouseLocation; // Current mouse position in world coordinates
-    sf::Vector2i m_pixelSize;   // Size of the plane in pixels
-    sf::Vector2f m_planeCenter; // Center of the complex plane
-    sf::Vector2f m_planeSize;   // Size of the plane in complex coordinates
-    int m_zoomCount;            // Zoom level
-    float m_aspectRatio;        // Aspect ratio of the display
+const unsigned int MAX_ITER = 64;
+const float BASE_WIDTH = 4.0;
+const float BASE_HEIGHT = 4.0;
+const float BASE_ZOOM = 0.5;
+const int THREAD_COUNT = 4;
 
-   
-    // Internal functions
+enum State
+{
+	CALCULATING,
+	DISPLAYING
+};
+
+class ComplexPlane : public sf::Drawable
+{
 public:
-    int countIterations(sf::Vector2f coord) const;
-    void iterationsToRGB(size_t count, sf::Uint8& r, sf::Uint8& g, sf::Uint8& b) const;
-    sf::Vector2f mapPixelToCoords(sf::Vector2i mousePixel) const;
-    void updateRender();
-    ComplexPlane(int pixelWidth, int pixelHeight);
-    void zoomIn();
-    void zoomOut();
-    void setCenter(sf::Vector2i mousePixel);
-    void setMouseLocation(sf::Vector2i mousePixel);
+	ComplexPlane(int pixelWidth, int pixelHeight);
+	void draw(sf::RenderTarget& target, sf::RenderStates States) const; // draw should actually be public, but i dont think theres much difference
+	void zoomIn();
+	void zoomOut();
+	void setCenter(sf::Vector2i mousePixel);
+	void setMouseLocation(sf::Vector2i mousePixel);
+	void updateText(sf::Text& text);
+	void updateRender();
 
-protected:
-    void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+private:
+	int countIterations(sf::Vector2f coord) const;
+	void iterationsToRGB(size_t count, sf::Uint8& r, sf::Uint8& g, sf::Uint8& b) const;
+	sf::Vector2f mapPixelToCoords(sf::Vector2i mousePixel) const;
+
+	State m_state;
+	sf::VertexArray m_vArray;
+	sf::Vector2f m_mouseLocation;
+	sf::Vector2i m_pixelSize;
+	sf::Vector2f m_planeCenter;
+	sf::Vector2f m_planeSize;
+	int m_zoomCount;
+	float m_aspectRatio;
 };
 
 #endif 
