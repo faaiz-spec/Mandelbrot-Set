@@ -32,8 +32,8 @@ sf::Vector2f ComplexPlane::mapPixelToCoords(sf::Vector2i mousePixel) const
 // Count Mandelbrot iterations
 int ComplexPlane::countIterations(sf::Vector2f coord) const 
 {
-    static float re, im, reTemp;
-    static int iterations;
+    float re, im, reTemp;
+    int iterations;
     re = 0; im = 0;
     iterations = 0;
 
@@ -93,22 +93,48 @@ void ComplexPlane::iterationsToRGB(size_t count, sf::Uint8& r, sf::Uint8& g, sf:
     }
 }
 
-// Update vertex array with Mandelbrot values with multithreading to speed it up
+// Update vertex array with Mandelbrot values and multithreading
 void ComplexPlane::updateRender()
 {
     if (m_state == CALCULATING)
     {
-        for (int i = 0; i < m_pixelSize.y; ++i)
-            for (int j = 0; j < m_pixelSize.x; ++j)
-            {
-                m_vArray[j + i * m_pixelSize.x].position = { (float)j, (float)i };
-                size_t count = countIterations(mapPixelToCoords({ j,i }));
-                Uint8 r, g, b;
-                iterationsToRGB(count, r, g, b);
-                m_vArray[j + i * m_pixelSize.x].color = { r, g, b };
-                m_state = DISPLAYING;
+        const int THREAD_COUNT = std::thread::hardware_concurrency();
+        const int rowsPerThread = m_pixelSize.y / THREAD_COUNT;
+        std::vector<std::thread> threads;
+
+        for (int t = 0; t < THREAD_COUNT; ++t) {
+            int startRow = t * rowsPerThread;
+            int endRow = (t == THREAD_COUNT - 1) ? m_pixelSize.y : (t + 1) * rowsPerThread;
+
+            threads.emplace_back(&ComplexPlane::calculateRow, this, startRow, endRow);
+        }
+
+        // Join threads
+        for (auto& thread : threads) {
+            if (thread.joinable()) {
+                thread.join();
             }
+        }
+
+        m_state = DISPLAYING;
     }
+}
+
+void ComplexPlane::calculateRow(int startRow, int endRow)
+{
+    //std::cout << "Thread processing rows: " << startRow << " to " << endRow << "\n";
+    for (int i = startRow; i < endRow; ++i)
+        for (int j = 0; j < m_pixelSize.x; ++j)
+        {
+            //std::cout << i << ' ' << j << '\n';
+            m_vArray[j + i * m_pixelSize.x].position = { (float)j, (float)i };
+            size_t count = countIterations(mapPixelToCoords({ j,i }));
+            Uint8 r, g, b;
+            iterationsToRGB(count, r, g, b);
+            m_vArray[j + i * m_pixelSize.x].color = { r, g, b };
+            m_state = DISPLAYING;
+        }
+
 }
 
 // Zoom in
